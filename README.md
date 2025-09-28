@@ -1,377 +1,416 @@
-Declives RedeViaria
+Slopes experiments
 ================
 
-Mapas com os declives de uma rede viária
+This repo structures and documents the activities in the creation of a map with the slopes of a road network, replicating the rationale, code and most of the instructions in: (https://github.com/U-Shift/Declives-RedeViaria/blob/main/README.md) and adding other relevant information to me to understand the process, learn R, successfully create the final map and achieve the desired goals.
 
-Este repositório explica como produzir um mapa de declives de uma rede
-viária em *open source software*, usando como exemplo o caso da cidade
-do Porto.  
-Para criar o mapa de declives, são necessários dois ficheiros:
+**Goals**
+- check if the road network of a given city is smooth for cycling in terms of slope values
+- explore QGIS functionalities
+- start learning R language
 
-- Rede viária, em shapefile ou outro formato vectorial
-- Modelo Digital do Terreno ou de Elevação (MDT, DEM), em raster (tif ou
-  outro)
+**References**
+- https://github.com/temospena/slopes
+- https://docs.ropensci.org/slopes/articles/slopes.html#calculate-slope
+- https://github.com/U-Shift/Declives-RedeViaria/blob/main/README.md
+- http://www.rosafelix.bike/
+- https://r.geocompx.org/spatial-class.html
+- https://web.tecnico.ulisboa.pt/rosamfelix/r/COMPILACAO.html#1_scripts_b%C3%A1sicos
 
-Recomenda-se estes dois softwares:
+**Input map files**
+- Digital Elevation Model (DEM) of the country (raster data)
+- limit of the municipality (vector data)
+- road network of the country (vector data)
 
-- [R project](https://www.r-project.org/)
-- [QGIS](https://qgis.org/en/site/)
+**Output map files**
+- map of slope classes of the road network of a municipality (*html* file):
 
-*For an english version, check this [quick
-script](https://github.com/U-Shift/Declives-RedeViaria/blob/main/code/slopes_iow.R).*
+## Create map of slope classes of a municipality road network
 
-## Perparação dos ficheiros
+**Process overview**
 
-### Rede Viária
+![plot](./images/diagram_process_overview.png)
 
-A rede viária pode ser obtida de várias formas. Em primeiro lugar,
-experimentar procurar nos “dados abertos” da câmara municipal em
-questão. Esses dados estão normalmente *limpos* e actualizados.
+In this example:
+- Country: Portugal
+- mun: Ovar
 
-Caso não estejam disponíveis, pode-se usar os dados abertos do [**Open
-Steet Map**](https://www.openstreetmap.org/) (OSM).  
-O problema é que a rede viária normalmente tem de ser *limpa*. Por
-exemplo, faz sentido manter as escadas, os túneis e auto-estradas para
-caminhos em bicicleta?  
-**Ver o tutorial de como extrair e limpar uma rede viária do OSM, usando
-apenas o *R***:
-[tutorials/OSMextract_prepare.md](https://github.com/U-Shift/Declives-RedeViaria/blob/main/tutorials/OSMextract_prepare.md).
+### Software requirements
+*QGIS*
+- Install it by following the instuctions in https://qgis.org/resources/installation-guide/.
 
-Ou então, pode-se recorrer ao **QGIS** (outro software livre de Sistemas
-de Informação Geográfica), e instalar um plugin [**OSM
-donwloader**](https://plugins.qgis.org/plugins/OSMDownloader/). Instalar
-um plugin no QGIS [é
-simples](https://docs.qgis.org/3.10/en/docs/training_manual/qgis_plugins/fetching_plugins.html).
+*R*
+1. Install it by following the instructions in https://cran.r-project.org/.
+   For Windows, download the latest version of R from https://cran.r-project.org/bin/windows/base/.
+3. Install the required packages by running the following command in R:
+    ```
+    install.packages("<package_name>")
+    ```
 
-Para o Porto, o ficheiro `RedeViariaPorto_osm.shp` já foi limpo segundo
-o
-[tutorial](https://github.com/U-Shift/Declives-RedeViaria/blob/main/tutorials/OSMextract_prepare.md),
-e está disponibilizado na pasta `shapefiles`.
+    | Package name | Brief description | Source of more information |
+    | ------------ | ----------------- | ---------------------------|
+    | sf | Simple Features for R; a standardized way to encode and analyze spatial vector data | https://cran.r-project.org/web/packages/sf/index.html |
+    | raster | Reading, writing, manipulating, analyzing and modeling of spatial data; superseded by the "terra" package | https://cran.r-project.org/web/packages/raster/index.html |
+    | terra | Methods for spatial data analysis with vector and raster data | https://cran.r-project.org/web/packages/terra/index.html ? |
+    | geodist | Fast, dependency-free geodesic distance calculations | https://cran.r-project.org/web/packages/geodist/index.html |
+    | slopes | Calculates the slope (longitudinal gradient or steepness) of linear geographic features such as roads and rivers | https://cran.r-project.org/web/packages/slopes/index.html |
+    | tmap | Thematic maps, that is, geographical maps in which spatial data distributions are visualized | https://cran.r-project.org/web/packages/tmap/index.html |
+    | spData | Diverse spatial datasets for demonstrating, benchmarking and teaching spatial data analysis | https://cran.r-project.org/web/packages/spData/index.html ? |
 
-### Modelo Digital do Terreno
+### 1. Download map with municipality limits of the country
+Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_Continente_2024_1-gpkg.zip`* by using the link https://geo2.dgterritorio.gov.pt/caop/CAOP_Continente_2024_1-gpkg.zip.
 
-Estes raster são difíceis de obter gratuitamente para resoluções
-melhores. Para o caso de uma Rede Viária, seria bom ter um raster com
-células de 10metros ou menos.
+### 2. Create map of the selected municipality
+1. Unzip the downloaded *geopackage* file *`Continente_CAOP2024.gpkg`* of the CAOP.
+2. Open R program and load the CAOP file:
+   ```
+   CAOP = st_read("<folder_path>/Continente_CAOP2024.gpkg", layer = 'cont_municipios')
+   ```
+   ```
+   ## Reading layer `cont_municipios' from data source `<folder_path>\Continente_CAOP2024.gpkg' using driver `GPKG'
+   ## Simple feature collection with 278 features and 9 fields
+   ## Geometry type: MULTIPOLYGON
+   ## Dimension:     XY
+   ## Bounding box:  xmin: -119191.4 ymin: -300404.8 xmax: 162129.1 ymax: 276083.8
+   ## Projected CRS: ETRS89 / Portugal TM06
+   ```
+      
+4. Check the names of the columns, particularly the ones of the municipalities and geometry, to be used in the next step:
+   ```
+   colnames(CAOP)
+   ```
+   ```
+   ## [1] "dtmn"          "municipio"     "distrito_ilha" "nuts3"         "nuts2"         "nuts1"         "area_ha"       "perimetro_km"  "n_freguesias"  "geom"
+   ```
+   
+5. Create geometry with the desired columns:
+   ```
+   municips_PT = CAOP[,c("municipio","geom")]
+   ```
+  
+6. Change CRS from ETRS89 / Portugal TM06 to WGS84:
+   ```
+   municips_PT = st_transform(municips_PT, 4326)
+   ```
 
-Os dados do **SRTM** (*Shuttle Radar Topography Mission*), uma missão da
-NASA, estão [disponíveis
-gratuitamente](https://gisgeography.com/srtm-shuttle-radar-topography-mission/),
-mas para uma resolução de 25 a 30m, com erro da altimetria vertical de
-16m - [saber mais](https://www2.jpl.nasa.gov/srtm/). Para fazer donwload
-do *tile* correcto, pode-se também recorrer a um outro plugin do QGIS, o
-[SRTM-Donwloader](https://plugins.qgis.org/plugins/SRTM-Downloader/), e
-pedir para guardar o raster que cobre a shapefile da rede viária - é uma
-opção no QGIS.
+7. Save geometry as geopackage file:
+    ```
+    st_write(municips_PT, "<path>/Municips_PT.gpkg", append=F)
+    ```
+    ```
+    ## Writing layer `MunicipsPT' to data source `<folder_path>/MunicipsPT.gpkg' using driver `GPKG'
+    ## Writing 278 features with 1 fields and geometry type Multi Polygon.
+    ```
+    Later, to reproduce the exercise for another municipality, skip the steps 1 to 8 and use the file **municips_PT.gpkg** for the next steps.
 
-Em alternativa, a **COPERNICUS**, uma missão da ESA, também
-[disponibiliza
-gratuitamente](https://land.copernicus.eu/imagery-in-situ/eu-dem) os DEM
-para toda a Europa, e com uma resolução de 25, com erro da altimetria
-vertical de 7m - [saber
-mais](https://land.copernicus.eu/user-corner/publications/eu-dem-flyer/view).
-Trata-se de um produto que é baseado no SRTM e no ASTER GDEM, com uma
-abordagem de ponderação de pesos. A sua versão anterior (1.0)
-apresentava uma precisão média de 2.9m verticais, quando foi validada.  
-Para escolher o *tile* correcto, pode-se [navegar no
-mapa](https://land.copernicus.eu/imagery-in-situ/eu-dem/eu-dem-v1.1), e
-seleccionar os ficheiros. Para fazer download é necessário fazer login
-([registo gratuito](https://land.copernicus.eu/@@register)).  
-**Entretanto ficou descontinuado.**
+8. Get the list of the municipalities:
+    ```
+    municips_PT$municipio
+    ```
 
-O novo método passa por escolher o tile a partir da grid, identificar as
-coordenadas, e alterar o seguinte link:
+9. Create map of the desired municipality *`Ovar_limit.gpkg`*:
+    ```
+    Ovar_limit = municips_PT %>% filter(municipio == "Ovar")
+    ```
+    
 
-> Example of direct query for a 30m DEM tile (North 29°- East 14°):
-> <https://prism-dem-open.copernicus.eu/pd-desk-open-access/prismDownload/COP-DEM_GLO-30-DGED__2022_1/Copernicus_DSM_10_N29_00_E014_00.tar>
-> [source](https://sentinels.copernicus.eu/web/sentinel/-/copernicus-dem-new-direct-data-download-access)
-
-<img src="images/clipboard-992788607.png" width="800" />
-
-Como o raster cobre uma área bem maior do que necessitamos (ver ficheiro
-`N41W009.hgt`), podemos sempre fazer um *clip* para ficar com dimensões
-mais adequadas à nossa análise:
-`Raster > Extraction > Clip Raster by Extent`.  
-O ficheiro `PortoNASA_clip.tif` ou `PortoCOPERNICUS_clip.tif` na pasta
-`raster` já foi cortado para uma área mais adequada à cidade do Porto.
-
-> Neste caso, é necessário re-projectar a rede viária no sistema de
-> coordenadas do DEM: `EPGS-3035` para ETRS89-LAEA. (*já não se
-> aplica!*)
-
-## Cálculo dos Declives
-
-O ficheiro `slopes.R` na pasta `code` pode ser corrido em R. Antenção
-para mudar os “caminhos” onde estão os ficheiros raster e shapefile.
-
-São necessários os seguintes packages:
-
-``` r
-library(sf)
-library(raster)
-library(geodist)
-library(slopes)
-library(tmap)
-```
-
-### importar ficheiros
-
-#### shapefile
-
-``` r
-RedeViaria = st_read("shapefiles/RedeViariaPorto_osm.shp")
-```
-
-    ## Reading layer `RedeViariaPorto_osm' from data source 
-    ##   `/media/rosa/Dados/GIS/Declives-RedeViaria/shapefiles/RedeViariaPorto_osm.shp' 
-    ##   using driver `ESRI Shapefile'
-    ## Simple feature collection with 13738 features and 9 fields
+### 3. Get road network of the country
+1. Call the required libraries and extract file of road network from OSM:
+    ```
+    library(osmextract)
+    library(sf)
+    portugal_osm = oe_get("Portugal", provider = "geofabrik", stringsAsFactors = FALSE, quiet = FALSE,
+                       force_download = TRUE, force_vectortranslate = TRUE)
+    ```
+    ```
+    ## The input place was matched with: Portugal
+    ## Downloading the OSM extract                                                                               File downloaded!
+    ## Starting with the vectortranslate operations on the input file!
+    ## 0...10...20...30...40...50...60...70...80...90...100 - done.
+    ## Finished the vectortranslate operations on the input file!
+    ## Reading layer `lines' from data source `/<temp_path>/geofabrik_portugal-latest.gpkg' using driver `GPKG'
+    ## Simple feature collection with 1984239 features and 10 fields
     ## Geometry type: LINESTRING
     ## Dimension:     XY
-    ## Bounding box:  xmin: -8.694169 ymin: 41.12601 xmax: -8.547498 ymax: 41.19294
+    ## Bounding box:  xmin: -35.65957 ymin: 28.11586 xmax: -2 ymax: 51.28145
+    ## Geodetic CRS:  WGS 84
+    ```
+    The road network of Portugal is downloaded and converted to the *geopackage* format, native format from QIGS, equivalent to shapefile format.
+
+2. Read file and check data, such as Coordinate Reference System and geometry type:
+    ```
+    networkOSM_PT = st_read("<folder_path>/geofabrik_portugal-latest.gpkg", layer= "lines")
+    ```
+    ```
+    ## Reading layer `lines' from data source `<folder_path>\geofabrik_portugal-latest.gpkg' using driver `GPKG'
+    ## Simple feature collection with 1984239 features and 10 fields
+    ## Geometry type: LINESTRING
+    ## Dimension:     XY
+    ## Bounding box:  xmin: -35.65957 ymin: 28.11586 xmax: -2 ymax: 51.28145
     ## Geodetic CRS:  WGS 84
 
-``` r
-# RedeViaria = st_transform(RedeViaria, 4326) #projectar em WGS84
-# RedeViaria = st_cast(RedeViaria, "LINESTRING", do_split=F) #o slopes só permite linestrings, mas não deixarque parta as linhas
-class(RedeViaria)
+3. Check available categories:
+   ```
+   table(networkOSM_PT$highway)
+   ```
+   ```
+   ##
+   ```
+4. Filter roads with the desired categories:
+    ```
+    library(dplyr)
+    networkOSM_PT_filtered = networkOSM_PT %>% 
+    dplyr::filter(highway %in% c('primary', "primary_link", 'secondary',"secondary_link", 'tertiary', "tertiary_link",
+                "trunk", "trunk_link", "residential", "cycleway", "living_street", "unclassified",
+                "motorway", "motorway_link", "pedestrian", "steps", "service", "track"))
+    ```
+    *Notes from reference instructions:* OpenStreetMap classifies the roads in different categories. The footpaths should be left out of the selected network sample. Also, to get a lighter network, only the higher
+    levels roads can be selected, such as the ones with categories "primary", "secondary" and "tertiary". Some roads do not have a category assigned yet but can be used for cycling as well. I kept this category.
+
+5. Save filtered network of the country in geopackage file *`networkOSM_PT_filtered.gpkg`*:
+    ```
+    st_write(municips_PT, "<path>/networkOSM_PT_filtered.gpkg")
+    ```
+
+### 4. Clip road network by the municipality
+1. Crop the road network to make the next operation lighter, using the municipality limit:
+    ```
+    #municips_PT = st_read("<path>/MunicipsPT.gpkg")
+    library(stplanr)
+    linesOSM_mun = st_crop(portugal_osm_filtered, MunLimit)
+    ```
+    ```
+    ## Warning message:
+    ## attribute variables are assumed to be spatially constant throughout all geometries
+    ```
+
+2. Clip the road network by using a buffer of 100 m, for example, to avoid cutting the lines that are in the limit of the municipality:
+    ```
+    networkOSM_mun = st_intersection(linesOSM_mun, geo_buffer(mun_limit, dist=100))
+    ```
+    ```
+    ## Warning message:
+    ## attribute variables are assumed to be spatially constant throughout all geometries
+    ```
+
+3. Save the resulting geometry as *geopackage* file *`networkOSM_Ovar.gpkg`*:
+    ```
+    st_write(networkOSM_mun, "<folder_path>/networkOSM_Ovar.gpkg")
+    ```
+
+### 5. Delete unconnected segments
+The segments of the geometry that are isolated, that is, that not connected to the main road network, must be deleted:
+1. Load the layer *networkOSM_Ovar.gpkg* in QGIS.
+2. In the upper menu, select **Vector** and check if **Disconnected Islands** plugin is displayed.
+   - If it is, go to step 3.
+   - If not, in the upper menu, select **Plugins** > **Manage and Install Plugins** and check the **Installed** plugins.
+       - If **Disconnected Islands** is on the list, tick its box for it to appear on the **Vector** plugins list and go to step 3. (CHECK)
+       - If **Disconnected Islands** is not on the list, install it.
+           1. Select **Not installed**.
+           2. Enter the plugin name name in the search box.
+           3. Select it and click **Install Plugin**.
+3. In the upper menu, select **Vector**, hover over **Disconnected Islands** and then click Check for **Disconnected Islands**.
+4. Select the lowest tolerance and check the option Use all vertices on a road link. 232 segments were selected, with a group ID assigned higher than 0 (networkGRP attribute).
+5. Select all the segments with a networkGRP > 0 and invert selection. Then export selection as a new geopackage file as the cleaned network from Ovar: *networkOSM_Ovar_cleaned.gpkg*.  filename
+
+### 6. Convert network geometry to the required type
+1. Open R and load the cleaned network from Ovar:
+    ```
+    networkOSM_Ovar_cleaned = st_read("<path>/networkOSM_Ovar_cleaned.gpkg")
+    ```
+    ```
+    ## Reading layer `networkosm_ovar' from data source 
+    ## `D:\Documentos\Projetos\GIS\test_slopes3\networkOSM_Ovar_cleaned.gpkg' 
+    ##  using driver `GPKG'
+    ## Simple feature collection with 6838 features and 12 fields
+    ## Geometry type: MULTILINESTRING
+    ## Dimension:     XY
+    ## Bounding box:  xmin: -8.691657 ymin: 40.81252 xmax: -8.523237 ymax: 40.97621
+    ## Geodetic CRS:  WGS 84
+    ```
+    After the previous operation, geometry type is now MULTILINESTRING.
+   
+3. Convert the geometry type to `LINSTRING` - the required geometry type for the slopes calculation:
+    ```
+    networkOSM_Ovar_conv = portugal_osm_filtered %>% filter(osm_id %in% networkOSM_Ovar_cleaned$osm_id)
+    ```
+4. Check if geometry type is now correct:
+    ```
+    st_geometry(networkOSM_Ovar_cov)
+    ```
+    ```
+    ## Geometry set for 6838 features 
+    ## Geometry type: LINESTRING
+    ## Dimension:     XY
+    ## Bounding box:  xmin: -8.691792 ymin: 40.78936 xmax: -8.509474 ymax: 40.98472
+    ## Geodetic CRS:  WGS 84
+    ## First 5 geometries:
+    ## LINESTRING (-8.610939 40.92746, -8.610506 40.92...
+    ## LINESTRING (-8.602149 40.93018, -8.602284 40.92...
+    ## LINESTRING (-8.60018 40.9277, -8.60056 40.92781...
+    ## LINESTRING (-8.603908 40.92804, -8.6037 40.9279...
+    ## LINESTRING (-8.60317 40.92573, -8.602993 40.925...
+    ```
+5. Save converted geometry in geopackage file *`networkOSM_Ovar_conv.gpkg`*:
+    ```
+    st_write(networkOSM_Ovar_conv, "<path>/networkOSM_Ovar_conv.gpkg")
+    ```
+    
+### 7. Cut long segments
+The goal is to cut long segments to calculate a mean value that is more realistic. Road segments will be cut at the instersection with another segments that have the same z level, to avoid cutting brunels. EXPLAIN
+1. In R, check the number of rows of the road network layer:
+    ```
+    nrow(networkOSM_Ovar_cleaned)
+    ```
+    ```
+    ## [1] 6838
+    ```
+2. Use a function that cut the segments in its internal vertices except in the intersection with brunels (bridges and tunnels):
+    ```
+    library(stplanr)
+    network_Ovar = stplanr::rnet_breakup_vertices(networkOSM_Ovar_cleaned)
+    ```
+3. Check the number of rows after cutting the road network in the intersections:
+    ```
+    nrow(network_Ovar)
+    ```
+    ```
+    ## [1] 11772
+    ```
+4. Export the resulting geometry to *geopackage* format *`network_Ovar.gpkg`*:
+    ```
+    st_write(network_Ovar, "D:/Documentos/Projetos/GIS/test_slopes3/network_Ovar.gpkg")
+    ```
+    The road network is ready for the slopes calculation.
+
+### 8. Download DEM of the country
+Download the QGIS project with DEM layer from https://www.fc.up.pt/pessoas/jagoncal/dems/ by using the link https://www.fc.up.pt/pessoas/jagoncal/dems/dems_pt.zip.
+
+### 9. Clip DEM by the road network
+Since the raster covers the country but only a small area is needed, cut the DEM raster to the city netowrk for the slopes analysis.
+
+1. After unzipping the downloaded file, double-click in *`dems_pt.qgz`* to open it in QGIS.
+2. Choose the desired DEM (I selected STRM).
+3. In the upper menu, select **Raster** > **Extraction** > **Clip Raster by Extent**.
+4. In the **Raster Extraction - Clip Raster by Extent** window, select the parameters:
+    - **Input layer**: select DEM file from the dropdown list
+    - **Clipping extent**: select **Draw on Map Canvas** from the dropdown list and draw the rectangle of the desired extent
+5. Click **Run**. The clipped raster layer is created.
+6. Select the clipped DEM layer and right-click it.
+7. Hove over **Export** and select **Save as** from the menu.
+8. In the **Save raster layer as** window, select **GeoTIFF** from the **Format** drop-down list.
+9. In the **Filename** box, enter the name of the file (I chose the name *DEM_Ovar*.) You can click the side button **Navigate** to choose the folder and alterantively enter the name in the pop-up window.
+10. Click **OK**. File with name *`DEM_Ovar.tif`* is created. \
+*NOTE:* The default CRS WGS84 can be selected in the **CRS** field so that the DEM raster is in the same Coordinate Reference System as the one of the road network. This will be important in section [6. Calculate slopes](#calculate-slopes).
+
+### 10. Check geometry requirements and visualize
+The DEM and road network geometries must be in the same CRS:
+1. Load the clipped DEM in R:
+    ```
+    st_read("<folder_path>/DEM_Ovar.gpkg")
+    ```
+    
+3. Plot DEM and road network of Ovar together:
+    ```
+    raster::plot(DEM_Ovar)
+    plot(sf::st_geometry(network_Ovar), add = TRUE)
+    ```
+
+![plot](./images/DEM_and_network_Ovar.png)
+
+### 11. Calculate slopes of the road network and statistics
+1. Still in R, add a column to the road network with the slopes values:
+    ```
+    network_Ovar$slope = slope_raster(network_Ovar, dem = DEM_Ovar )
+    ```
+    Add the function that presents the fields of the road network and plot elevation profile.
+   
+3. Calculate the percentage of the following slopes values: minimum, P25, median, average, P75, maximum:
+    ```
+    network_Ovar$slope_perc = network_Ovar$slope*100
+    summary(network_Ovar$slope_perc)
+    ```
+    ```
+    # Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    # 0.000   1.401   2.546   3.023   3.987  18.496
+    ``` 
+
+### 12. Assign slope classes to the network and calculate percentages
+1. Create a new column for slope classes and assign a value for each road:
+    ```
+    network_Ovar$slope_class =  network_Ovar$slope_perc %>%
+       cut(
+         breaks = c(0, 3, 5, 8, 10, 20, Inf),
+         labels = c("0-3: flat", "3-5: light","5-8: medium", "8-10: hard", "10-20: terrible", ">20: impossible"),
+         right = F
+       )
+    ```
+2. 
+```
+round(prop.table(table(network_Ovar$slope_class))*100,1)
 ```
 
-    ## [1] "sf"         "data.frame"
+3. Calculate the percentage of roads of each slope class:
+    ```
+    round(prop.table(table(network_Ovar$slope_class))*100,1)
+    ```
+    ```
+    ##      0-3: flat       3-5: light      5-8: medium  8-10: hard 10-20: terrible >20: impossible
+    ##           58.4            25.1            13.2             1.3             2.0             0.0 COPY AND PASTE AGAIN
+    ``` 
+    This means that half of the streets of the sample are flat or almost flat, and more than 80% of the streets are perfectly cyclable.
 
-Esta rede tem quase 14mil segmentos.
+### 13. Calculate length of the network and check values
+1. Add a column with the length of each segment of the geometry in meters:
+    ```
+    network_OSM$length = st_length(network_OSM)
+    ```
+2. Check the new columns and some values:
+    ```
+    head(ovar_route3)
+    ```
 
-#### raster com altimetria
+### 14. Create interactive map of network with the slope classes
+1. Prepare data for visualization by creating a colour palette between dark green and dark red:
+    ```
+    palredgreen = c("#267300", "#70A800", "#FFAA00", "#E60000", "#A80000", "#730000")
+    ```
+2. Load library and set tmap mode to "view":
+    ```
+    library(tmap)
+    tmap_mode("view")
+    ```
+    ```
+    ## tmap mode set to "view".
+    ```
+3. Create map of slope classes:
+    ```
+    tmap_options(basemaps = leaflet::providers$CartoDB.Positron) #base map
+    ```
+    ```
+    ## [v3->v4] `tmap_options()`: use basemap.server instead of basemaps
+    ```
+    ````
+    tmap_options(basemap.server = leaflet::providers$CartoDB.Positron)
+    map_slopes =
+     tm_shape(network_Ovar) +
+     tm_lines(
+         col = "slope_class",
+         palette = palredgreen, #colours palette
+         lwd = 2, #thickness of lines
+         title.col = "Slope [%]",
+         popup.vars = c("Type: " = "highway",
+                        "Length" = "length",
+                        "Slope: " = "slope",
+                        "Class: " = "slope_class"),
+         popup.format = list(digits = 1),
+         # id = "slope"
+         id = "name" #if the PC is not able to export due lack of memory, delete this line
+       )
+    ```
 
-``` r
-DEM = raster("raster/PortoNASA_clip.tif")
-class(DEM)
-```
+4. Save created map as *html* file *`slopes_SRTM_Ovar.html`*:
+    ```
+    tmap_save(map_slopes, "<folder_path>/slopes_SRTM_Ovar.html")
+    ```
 
-    ## [1] "RasterLayer"
-    ## attr(,"package")
-    ## [1] "raster"
-
-``` r
-summary(values(DEM))
-```
-
-    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##  -10.00   24.00   72.00   65.87   97.00  178.00
-
-``` r
-res(DEM)
-```
-
-    ## [1] 0.0002777778 0.0002777778
-
-Este raster tem valores de altimetria entre -10 e 178m. As células são
-de 27.7m
-
-#### visualizar
-
-O DEM e a Rede Vuária têm de estar no mesmo sistema de coordenadas.
-
-``` r
-raster::plot(DEM)
-plot(sf::st_geometry(RedeViaria), add = TRUE)
-```
-
-![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
-
-### Declives
-
-Através do package [**slopes**](https://github.com/ropensci/slopes),
-vai-se calcular os declives de cada segmento da rede, em modo absoluto.
-Ler mais na página do package sobre como são calculados.
-
-``` r
-RedeViaria$slope = slope_raster(RedeViaria, dem = DEM) #28 segundos
-```
-
-Declives em percentagem: *mínimo, P25, mediana, média, P75, max*.
-
-``` r
-RedeViaria$declive = RedeViaria$slope*100
-summary(RedeViaria$declive)
-```
-
-    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##   0.000   2.347   4.222   5.449   7.121  67.547
-
-Isto significa que metade das vias tem mais de 4% de inclinação, o que é
-bastante.
-
-Criar classes de declives, com labels perceptíveis
-
-``` r
-RedeViaria$declive_class =  RedeViaria$declive %>%
-  cut(
-    breaks = c(0, 3, 5, 8, 10, 20, Inf),
-    labels = c("0-3: plano", "3-5: leve","5-8: médio", "8-10: exigente", "10-20: terrível", ">20: impossível"),
-    right = F
-  )
-```
-
-Ver a percentagem de cada classe para toda a rede
-
-``` r
-round(prop.table(table(RedeViaria$declive_class))*100,1)
-```
-
-    ## 
-    ##      0-3: plano       3-5: leve      5-8: médio  8-10: exigente 10-20: terrível 
-    ##            34.3            24.0            21.4             7.7            10.8 
-    ## >20: impossível 
-    ##             1.8
-
-… o que quer dizer que 34.3% das ruas são planas ou quase planas, e
-cerca de 58% são perfeitamente cicláveis.
-
-> Ao usarmos o DEM europeu
-> ([Copernicus](raster/PortoCOPERNICUS_clip.tif)) os resultados são
-> diferentes: 50.9% das vias são planas ou quase planas (0-3%) e cerca
-> de 72% das vias são perfeitamente cicláveis (0-5%). Experimenta!
-
-Pode-se agora calcular a extensão das ruas
-
-``` r
-RedeViaria$length = st_length(RedeViaria)
-```
-
-e exportar novamente o shapefile
-
-``` r
-#exportar shapefile com os declives, em formato GeoPackage (QGIS)
-st_write(RedeViaria, "shapefiles/RedeViariaPorto_declives.gpkg", append=F)
-#exportar em formato kml (GoogleMaps)
-st_write(RedeViaria, "shapefiles/RedeViariaPorto_declives.kml", append=F)
-```
-
-## Exportar para html
-
-### Preparar dados para visualização
-
-Criar uma palete de cores, entre o verde escuro e o vermelho escuro
-
-``` r
-palredgreen = c("#267300", "#70A800", "#FFAA00", "#E60000", "#A80000", "#730000")
-```
-
-### Criar o mapa em html
-
-usando o [**tmap**](https://github.com/mtennekes/tmap/)
-
-``` r
-tmap_mode("view")
-tmap_options(basemaps = leaflet::providers$CartoDB.Positron) #mapa base
-mapadeclives =
-tm_shape(RedeViaria) +
-  tm_lines(
-    col = "declive_class",
-    palette = palredgreen, #palete de cores
-    lwd = 2, #espessura das linhas
-    title.col = "Declive [%]",
-    popup.vars = c("Tipo: " = "highway",
-                   "Comprimento" = "length",
-                   "Declive: " = "declive",
-                   "Classe: " = "declive_class"),
-    popup.format = list(digits = 1),
-    # id = "declive"
-    id = "name" #se o computaor não conseguir exportar por falta de memória, apagar esta linha.
-  )
-mapadeclives
-```
-
-#### Gravar em html
-
-``` r
-tmap_save(mapadeclives, "DeclivesPorto_SRTM.html")
-```
-
-*Dependendo do tamanho da rede, pode ser exigente para a RAM. Esta tinha
-cerca de 14mil arcos, e só consegui exportar num pc com 16GB de RAM*
-
-O mapa final pode ser visto online aqui:
-<http://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesPorto.html>
-
-## Para Lisboa
-
-O portal de [dados abertos da
-CML](http://lisboaaberta.cm-lisboa.pt/index.php/pt/) disponibiliza uma
-rede viária, embora só para [vias de heirarquia
-superior](http://dados.cm-lisboa.pt/dataset/rede-viaria-escala-1-20000),
-e um [Modelo Digital do
-Terreno](http://dados.cm-lisboa.pt/dataset/modelo-digital-de-terreno),
-embora com uma resolução de 48m.
-
-Por outro lado, disponibiliza dados sobre o [declive longitudinal das
-vias](http://dados.cm-lisboa.pt/dataset/declive-longitudinal-da-rede-viaria),
-com uma rede detalhada, e já com o valor de declive (`slope`), embora
-não forneça informação sobre que tipo de raster foi utilizado para o seu
-cálculo.
-
-### Exercício
-
-1.  Experimenta fazer o mesmo exercício, gravando o output do
-    `slope_raster` na variável `slopeNASA` (para não fazer overwrite do
-    `slope`), e **compara os resultados**. Podes usar o
-    `raster/LisboaNASA_clip.tif`
-2.  Compara os resultados com os declives calculados com um raster de
-    10m, do IST. Shapefile disponível em
-    `shapefiles/RedeViariaLisboa2012_declives_etrs89.gpkg`. Que
-    diferenças?
-
-Declives da rede viária de Lisboa (10m):
-<http://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesLisboa.html>
-
-<figure>
-<img
-src="https://github.com/U-Shift/Declives-RedeViaria/blob/main/README_files/figure-markdown_github/Lisboa_declives.PNG?raw=true"
-alt="Lisboa" />
-<figcaption aria-hidden="true">Lisboa</figcaption>
-</figure>
-
-> A mediana do declive das ruas de Lisboa é de 2.6%. 49% das vias são
-> planas ou quase planas (0-3%) e cerca de 72% das vias são
-> perfeitamente cicláveis (0-5%).
-
-## Mapas de declives, criados a partir deste script
-
-- [Almada
-  (NASA)](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesAlmada_SRTM.html)
-  \| [Almada
-  (ESA)](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesAlmada_EU.html)
-- [Amadora](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesAmadora_EU.html)
-- [Aveiro](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesAveiro_EU.html)
-- [Braga
-  (NASA)](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesBraga.html)
-  \| [Braga
-  (ESA)](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesBraga_EU.html)
-- [Cascais](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesCascais_EU.html)
-- [Coimbra](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesCoimbra_EU.html)
-- [Guarda](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesGuarda.html)
-- [Lisboa](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesLisboa.html)
-- [Loures](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesLoures.html)
-- [Oeiras](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesOeiras_EU.html)
-- [Porto
-  (NASA)](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesPorto_SRTM.html)
-  \| [Porto
-  (ESA)](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesPorto_EU.html)
-- [Vila Nova de
-  Gaia](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesGaia_EU.html)
-- [Isle of Wight
-  (UK)](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/SlopesIoW.html)
-- [Leeds
-  (UK)](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/SlopesLeeds.html)
-- [São Paulo
-  (BR)](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/DeclivesSaoPaulo.html)
-- [Medellín
-  (CO)](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/SlopesMedellin.html)
-- [Zurich
-  (CH)](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/SlopesZurich.html)
-- [Amsterdam
-  (NL)](https://web.tecnico.ulisboa.pt/~rosamfelix/gis/declives/SlopesAmsterdam.html)
-- [Paris
-  (NASA)](http://rosafelix.bike/gis/declives/SlopesParis_NASA.html) \|
-  [Paris (ESA)](http://rosafelix.bike/gis/declives/SlopesParis_ESA.html)
+    ![plot](./README_files/Ovar_network_slope_classes_2.png)
