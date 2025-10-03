@@ -61,7 +61,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
 
 ### 2. Create map of the selected municipality
 1. Unzip the downloaded *geopackage* file *`CAOP_Continente_2024-gpkg.zip`*.
-2. Open the R program and load the CAOP file *`Continente_CAOP2024.gpkg`*:
+2. Open R program and load the CAOP file *`Continente_CAOP2024.gpkg`*:
    ```
    library(sf)
    CAOP = st_read("<folder_path>/Continente_CAOP2024.gpkg", layer = 'cont_municipios')
@@ -75,7 +75,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
    ## Projected CRS: ETRS89 / Portugal TM06
    ```
       
-3. Check the names of the columns, particularly the ones of the municipalities and geometry, to be used in the next step:
+3. Check the names of the columns, particularly municipalities and geometry ones, to be used in the next step:
    ```
    colnames(CAOP)
    ```
@@ -95,7 +95,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
 
 6. Save geometry as geopackage file:
     ```
-    st_write(municips_PT, "<path>/Municips_PT.gpkg", append=F)
+    st_write(municips_PT, "<path>/municips_PT.gpkg", append=F)
     ```
     ```
     ## Writing layer `MunicipsPT' to data source `<folder_path>/MunicipsPT.gpkg' using driver `GPKG'
