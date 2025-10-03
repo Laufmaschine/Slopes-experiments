@@ -60,8 +60,8 @@ In this example:
 Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_Continente_2024_1-gpkg.zip`* by selecting the link https://geo2.dgterritorio.gov.pt/caop/CAOP_Continente_2024_1-gpkg.zip.
 
 ### 2. Create map of the selected municipality
-1. Unzip the downloaded *geopackage* file *`Continente_CAOP2024.gpkg`* of the CAOP.
-2. Open R program and load the CAOP file:
+1. Unzip the downloaded *geopackage* file *`CAOP_Continente_2024-gpkg.zip`*.
+2. Open the R program and load the CAOP file *`Continente_CAOP2024.gpkg`*:
    ```
    CAOP = st_read("<folder_path>/Continente_CAOP2024.gpkg", layer = 'cont_municipios')
    ```
