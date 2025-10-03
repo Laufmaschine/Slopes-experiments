@@ -1,7 +1,7 @@
 Slopes experiments (WIP)
 ================
 
-This repo structures and documents the activities in the creation of a map with the slopes of a road network, replicating the rationale, code and most of the instructions in: (https://github.com/U-Shift/Declives-RedeViaria/blob/main/README.md) and adding other relevant information to me to understand the process, learn R, successfully create the final map and achieve the desired goals.
+This repo structures and documents the activities in the creation of a map with the slopes of a road network, replicating the rationale, code and most of the instructions in: (https://github.com/U-Shift/Declives-RedeViaria/blob/main/README.md) and adding other relevant information to me to understand the process, successfully create slopes maps and achieve the desired goals.
 
 **Goals**
 - check if the road network of a given city is smooth for cycling in terms of slope values
