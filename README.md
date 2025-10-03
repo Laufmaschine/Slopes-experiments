@@ -1,4 +1,4 @@
-Slopes experiments
+Slopes experiments (WIP)
 ================
 
 This repo structures and documents the activities in the creation of a map with the slopes of a road network, replicating the rationale, code and most of the instructions in: (https://github.com/U-Shift/Declives-RedeViaria/blob/main/README.md) and adding other relevant information to me to understand the process, learn R, successfully create the final map and achieve the desired goals.
@@ -17,9 +17,9 @@ This repo structures and documents the activities in the creation of a map with 
 - https://web.tecnico.ulisboa.pt/rosamfelix/r/COMPILACAO.html#1_scripts_b%C3%A1sicos
 
 **Input map files**
-- Digital Elevation Model (DEM) of the country (raster data)
-- limit of the municipality (vector data)
-- road network of the country (vector data)
+- Digital Elevation Model (DEM) of the country (raster)
+- administrative divisions of the country (vector)
+- road network of the country (vector)
 
 **Output map files**
 - map of slope classes of the road network of a municipality (*html* file):
@@ -31,7 +31,7 @@ This repo structures and documents the activities in the creation of a map with 
 ![plot](./images/diagram_process_overview.png)
 
 In this example:
-- Country: Portugal
+- country: Portugal
 - mun: Ovar
 
 ### Software requirements
@@ -114,7 +114,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
     
 
 ### 3. Get road network of the country
-1. Call the required libraries and extract file of road network from OSM:
+1. In R, call the required libraries and extract file of road network from OSM:
     ```
     library(osmextract)
     library(sf)
@@ -172,7 +172,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
     ```
 
 ### 4. Clip road network by the municipality
-1. Crop the road network to make the next operation lighter, using the municipality limit:
+1. In R, crop the road network to make the next operation lighter, using the municipality limit:
     ```
     #municips_PT = st_read("<path>/MunicipsPT.gpkg")
     library(stplanr)
@@ -210,7 +210,7 @@ The segments of the geometry that are isolated, that is, that not connected to t
            3. Select it and click **Install Plugin**.
 3. In the upper menu, select **Vector**, hover over **Disconnected Islands** and then click Check for **Disconnected Islands**.
 4. Select the lowest tolerance and check the option Use all vertices on a road link. 232 segments were selected, with a group ID assigned higher than 0 (networkGRP attribute).
-5. Select all the segments with a networkGRP > 0 and invert selection. Then export selection as a new geopackage file as the cleaned network from Ovar: *networkOSM_Ovar_cleaned.gpkg*.  filename
+5. Select all the segments with a networkGRP > 0 and invert selection. Then export selection as a new geopackage file as the cleaned network from Ovar: *`networkOSM_Ovar_cleaned.gpkg`*.
 
 ### 6. Convert network geometry to the required type
 1. Open R and load the cleaned network from Ovar:
@@ -277,6 +277,7 @@ The goal is to cut long segments to calculate a mean value that is more realisti
     ## [1] 11772
     ```
 4. Export the resulting geometry to *geopackage* format *`network_Ovar.gpkg`*:
+   
     ```
     st_write(network_Ovar, "D:/Documentos/Projetos/GIS/test_slopes3/network_Ovar.gpkg")
     ```
@@ -303,7 +304,7 @@ Since the raster covers the country but only a small area is needed, cut the DEM
 *NOTE:* The default CRS WGS84 can be selected in the **CRS** field so that the DEM raster is in the same Coordinate Reference System as the one of the road network. This will be important in section [6. Calculate slopes](#calculate-slopes).
 
 ### 10. Check geometry requirements and visualize
-The DEM and road network geometries must be in the same CRS:
+The DEM and road network geometries - *`DEM_Ovar.tif`* and *`network_Ovar.gpkg`* - must be in the same CRS:
 1. Load the clipped DEM in R:
     ```
     st_read("<folder_path>/DEM_Ovar.gpkg")
@@ -322,7 +323,6 @@ The DEM and road network geometries must be in the same CRS:
     ```
     network_Ovar$slope = slope_raster(network_Ovar, dem = DEM_Ovar )
     ```
-    Add the function that presents the fields of the road network and plot elevation profile.
    
 3. Calculate the percentage of the following slopes values: minimum, P25, median, average, P75, maximum:
     ```
@@ -344,12 +344,8 @@ The DEM and road network geometries must be in the same CRS:
          right = F
        )
     ```
-2. 
-```
-round(prop.table(table(network_Ovar$slope_class))*100,1)
-```
 
-3. Calculate the percentage of roads of each slope class:
+2. Calculate the percentage of roads of each slope class:
     ```
     round(prop.table(table(network_Ovar$slope_class))*100,1)
     ```
