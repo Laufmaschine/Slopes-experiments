@@ -63,6 +63,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
 1. Unzip the downloaded *geopackage* file *`CAOP_Continente_2024-gpkg.zip`*.
 2. Open the R program and load the CAOP file *`Continente_CAOP2024.gpkg`*:
    ```
+   library(sf)
    CAOP = st_read("<folder_path>/Continente_CAOP2024.gpkg", layer = 'cont_municipios')
    ```
    ```
@@ -74,7 +75,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
    ## Projected CRS: ETRS89 / Portugal TM06
    ```
       
-4. Check the names of the columns, particularly the ones of the municipalities and geometry, to be used in the next step:
+3. Check the names of the columns, particularly the ones of the municipalities and geometry, to be used in the next step:
    ```
    colnames(CAOP)
    ```
@@ -82,17 +83,17 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
    ## [1] "dtmn"          "municipio"     "distrito_ilha" "nuts3"         "nuts2"         "nuts1"         "area_ha"       "perimetro_km"  "n_freguesias"  "geom"
    ```
    
-5. Create geometry with the desired columns:
+4. Create geometry with the desired columns:
    ```
    municips_PT = CAOP[,c("municipio","geom")]
    ```
   
-6. Change CRS from ETRS89 / Portugal TM06 to WGS84:
+5. Change CRS from ETRS89 / Portugal TM06 to WGS84:
    ```
    municips_PT = st_transform(municips_PT, 4326)
    ```
 
-7. Save geometry as geopackage file:
+6. Save geometry as geopackage file:
     ```
     st_write(municips_PT, "<path>/Municips_PT.gpkg", append=F)
     ```
@@ -102,12 +103,12 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
     ```
     Later, to reproduce the exercise for another municipality, skip the steps 1 to 8 and use the file **municips_PT.gpkg** for the next steps.
 
-8. Get the list of the municipalities:
+7. Get the list of the municipalities:
     ```
     municips_PT$municipio
     ```
 
-9. Create map of the desired municipality *`Ovar_limit.gpkg`*:
+8. Create map of the desired municipality *`Ovar_limit.gpkg`*:
     ```
     Ovar_limit = municips_PT %>% filter(municipio == "Ovar")
     ```
