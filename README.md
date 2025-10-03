@@ -55,6 +55,7 @@ In this example:
     | slopes | Calculates the slope (longitudinal gradient or steepness) of linear geographic features such as roads and rivers | https://cran.r-project.org/web/packages/slopes/index.html |
     | tmap | Thematic maps, that is, geographical maps in which spatial data distributions are visualized | https://cran.r-project.org/web/packages/tmap/index.html |
     | spData | Diverse spatial datasets for demonstrating, benchmarking and teaching spatial data analysis | https://cran.r-project.org/web/packages/spData/index.html ? |
+    | dplyr  | A fast, consistent tool for working with data frame like objects, both in memory and out of memory. | https://cran.r-project.org/web/packages/dplyr/index.html |
 
 ### 1. Download map with municipality limits of the country
 Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_Continente_2024_1-gpkg.zip`* by selecting the link https://geo2.dgterritorio.gov.pt/caop/CAOP_Continente_2024_1-gpkg.zip.
@@ -108,14 +109,15 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
     municips_PT$municipio
     ```
 
-8. Create map of the desired municipality *`Ovar_limit.gpkg`*:
+8. Pick the name of the desired municipality - "Ovar" in this example - and create map *`Ovar_limit.gpkg`*:
     ```
+    library(dplyr)
     Ovar_limit = municips_PT %>% filter(municipio == "Ovar")
     ```
     
 
 ### 3. Get road network of the country
-1. In R, call the required libraries and extract file of road network from OSM:
+1. In R, get road network from OSM:
     ```
     library(osmextract)
     library(sf)
