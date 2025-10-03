@@ -38,7 +38,7 @@ In this example:
 *QGIS*
 - Install it by following the instuctions in https://qgis.org/resources/installation-guide/.
 
-*R*
+*R project*
 1. Install it by following the instructions in https://cran.r-project.org/.
    For Windows, download the latest version of R from https://cran.r-project.org/bin/windows/base/.
 3. Install the required packages by running the following command in R:
@@ -137,9 +137,9 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
     ## Bounding box:  xmin: -35.65957 ymin: 28.11586 xmax: -2 ymax: 51.28145
     ## Geodetic CRS:  WGS 84
     ```
-    The road network of Portugal is downloaded and converted to the *geopackage* format, native format from QIGS, equivalent to shapefile format.
+    The road network of Portugal is downloaded to a temporary folder in *geopackage* format, native format from QIGS, equivalent to shapefile format.
 
-2. Read file and check data, such as Coordinate Reference System and geometry type:
+2. Read *geopackage* file and check data, such as Coordinate Reference System and geometry type:
     ```
     networkOSM_PT = st_read("<folder_path>/geofabrik_portugal-latest.gpkg", layer= "lines")
     ```
