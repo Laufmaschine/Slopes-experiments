@@ -57,7 +57,7 @@ In this example:
     | spData | Diverse spatial datasets for demonstrating, benchmarking and teaching spatial data analysis | https://cran.r-project.org/web/packages/spData/index.html ? |
 
 ### 1. Download map with municipality limits of the country
-Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_Continente_2024_1-gpkg.zip`* by using the link https://geo2.dgterritorio.gov.pt/caop/CAOP_Continente_2024_1-gpkg.zip.
+Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_Continente_2024_1-gpkg.zip`* by selecting the link https://geo2.dgterritorio.gov.pt/caop/CAOP_Continente_2024_1-gpkg.zip.
 
 ### 2. Create map of the selected municipality
 1. Unzip the downloaded *geopackage* file *`Continente_CAOP2024.gpkg`* of the CAOP.
