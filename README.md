@@ -48,14 +48,14 @@ In this example:
 
     | Package name | Brief description | Source of more information |
     | ------------ | ----------------- | ---------------------------|
-    | sf | Simple Features for R; a standardized way to encode and analyze spatial vector data | https://cran.r-project.org/web/packages/sf/index.html |
-    | raster | Reading, writing, manipulating, analyzing and modeling of spatial data; superseded by the "terra" package | https://cran.r-project.org/web/packages/raster/index.html |
-    | terra | Methods for spatial data analysis with vector and raster data | https://cran.r-project.org/web/packages/terra/index.html ? |
-    | geodist | Fast, dependency-free geodesic distance calculations | https://cran.r-project.org/web/packages/geodist/index.html |
-    | slopes | Calculates the slope (longitudinal gradient or steepness) of linear geographic features such as roads and rivers | https://cran.r-project.org/web/packages/slopes/index.html |
-    | tmap | Thematic maps, that is, geographical maps in which spatial data distributions are visualized | https://cran.r-project.org/web/packages/tmap/index.html |
-    | spData | Diverse spatial datasets for demonstrating, benchmarking and teaching spatial data analysis | https://cran.r-project.org/web/packages/spData/index.html ? |
     | dplyr  | A fast, consistent tool for working with data frame like objects, both in memory and out of memory. | https://cran.r-project.org/web/packages/dplyr/index.html |
+    | geodist | Fast, dependency-free geodesic distance calculations | https://cran.r-project.org/web/packages/geodist/index.html |
+    | raster | Reading, writing, manipulating, analyzing and modeling of spatial data; superseded by the "terra" package | https://cran.r-project.org/web/packages/raster/index.html |
+    | sf | Simple Features for R; a standardized way to encode and analyze spatial vector data | https://cran.r-project.org/web/packages/sf/index.html |
+    | slopes | Calculates the slope (longitudinal gradient or steepness) of linear geographic features such as roads and rivers | https://cran.r-project.org/web/packages/slopes/index.html |
+    | spData | Diverse spatial datasets for demonstrating, benchmarking and teaching spatial data analysis | https://cran.r-project.org/web/packages/spData/index.html ? |
+    | terra | Methods for spatial data analysis with vector and raster data | https://cran.r-project.org/web/packages/terra/index.html ? |
+    | tmap | Thematic maps, that is, geographical maps in which spatial data distributions are visualized | https://cran.r-project.org/web/packages/tmap/index.html |
 
 ### 1. Download map with municipality limits of the country
 Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_Continente_2024_1-gpkg.zip`* by selecting the link https://geo2.dgterritorio.gov.pt/caop/CAOP_Continente_2024_1-gpkg.zip.
@@ -102,7 +102,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
     ## Writing layer `MunicipsPT' to data source `<folder_path>/MunicipsPT.gpkg' using driver `GPKG'
     ## Writing 278 features with 1 fields and geometry type Multi Polygon.
     ```
-    Later, to reproduce the exercise for another municipality, skip the steps 1 to 8 and use the file **municips_PT.gpkg** for the next steps.
+    Later, to reproduce the exercise for another municipality, skip the steps 1 to 8 and use the file *`municips_PT.gpkg`* for the next steps.
 
 7. Get the list of the municipalities:
     ```
@@ -113,6 +113,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
     ```
     library(dplyr)
     Ovar_limit = municips_PT %>% filter(municipio == "Ovar")
+    st_write(Ovar_limit, "D:/Documentos/Projetos/GIS/final_github_slopes-experiments/Ovar_limit.gpkg")
     ```
     
 
@@ -151,13 +152,11 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
     ## Bounding box:  xmin: -35.65957 ymin: 28.11586 xmax: -2 ymax: 51.28145
     ## Geodetic CRS:  WGS 84
 
-3. Check available categories:
+3. Check available categories for roads, that is, the existing values for key **highway=***, and respective definitions in https://wiki.openstreetmap.org/wiki/Key:highway):
    ```
    table(networkOSM_PT$highway)
    ```
-   ```
-   ##
-   ```
+   
 4. Filter roads with the desired categories:
     ```
     library(dplyr)
@@ -166,12 +165,12 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
                 "trunk", "trunk_link", "residential", "cycleway", "living_street", "unclassified",
                 "motorway", "motorway_link", "pedestrian", "steps", "service", "track"))
     ```
-    *Notes from reference instructions:* OpenStreetMap classifies the roads in different categories. The footpaths should be left out of the selected network sample. Also, to get a lighter network, only the higher
-    levels roads can be selected, such as the ones with categories "primary", "secondary" and "tertiary". Some roads do not have a category assigned yet but can be used for cycling as well. I kept this category.
+    *Notes from reference instructions:* OpenStreetMap classifies the roads in different categories. The footpaths should be left out of the selected network sample. Also, to get a lighter network, only the roads
+    with higher levels can be selected, such as the ones with categories "primary", "secondary" and "tertiary". Some roads do not have a category assigned yet ( value is **unclassified**) but can be used for cycling as well. I kept this category.
 
-5. Save filtered network of the country in geopackage file *`networkOSM_PT_filtered.gpkg`*:
+6. Save filtered network of the country as a geopackage file - *`networkOSM_PT_filtered.gpkg`*:
     ```
-    st_write(municips_PT, "<path>/networkOSM_PT_filtered.gpkg")
+    st_write(networkOSM_PT_filtered, "<path>/networkOSM_PT_filtered.gpkg")
     ```
 
 ### 4. Clip road network by the municipality
@@ -179,7 +178,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
     ```
     #municips_PT = st_read("<path>/MunicipsPT.gpkg")
     library(stplanr)
-    linesOSM_mun = st_crop(portugal_osm_filtered, MunLimit)
+    linesOSM_Ovar = st_crop(portugal_osm_filtered, MunLimit)
     ```
     ```
     ## Warning message:
@@ -188,16 +187,16 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
 
 2. Clip the road network by using a buffer of 100 m, for example, to avoid cutting the lines that are in the limit of the municipality:
     ```
-    networkOSM_mun = st_intersection(linesOSM_mun, geo_buffer(mun_limit, dist=100))
+    networkOSM_Ovar = st_intersection(linesOSM_Ovar, geo_buffer(Ovar_limit, dist=100))
     ```
     ```
     ## Warning message:
     ## attribute variables are assumed to be spatially constant throughout all geometries
     ```
 
-3. Save the resulting geometry as *geopackage* file *`networkOSM_Ovar.gpkg`*:
+3. Save the resulting geometry as *geopackage* file - *`networkOSM_Ovar.gpkg`*:
     ```
-    st_write(networkOSM_mun, "<folder_path>/networkOSM_Ovar.gpkg")
+    st_write(networkOSM_Ovar, "<folder_path>/networkOSM_Ovar.gpkg")
     ```
 
 ### 5. Delete unconnected segments
