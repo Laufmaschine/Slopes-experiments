@@ -209,10 +209,18 @@ The segments of the geometry that are isolated, that is, that not connected to t
        - If **Disconnected Islands** is not on the list, install it.
            1. Select **Not installed**.
            2. Enter the plugin name name in the search box.
-           3. Select it and click **Install Plugin**.
-3. In the upper menu, select **Vector**, hover over **Disconnected Islands** and then click Check for **Disconnected Islands**.
-4. Select the lowest tolerance and check the option Use all vertices on a road link. 232 segments were selected, with a group ID assigned higher than 0 (networkGRP attribute).
-5. Select all the segments with a networkGRP > 0 and invert selection. Then export selection as a new geopackage file as the cleaned network from Ovar: *`networkOSM_Ovar_cleaned.gpkg`*.
+           3. Select it and then select **Install Plugin**.
+3. Hover over **Disconnected Islands** and then select **Check for Disconnected Islands**.
+4. Select the option **Use all vertices on a road link** and the lowest tolerance in **Tolerance**. Select **OK**.
+   203 segments were selected, with a group ID assigned higher than 0 (networkGRP attribute).
+6. Select all the segments with a networkGRP > 0:
+   1. Right-click the **networkOSM_Ovar** layer and select **Open Attribute Table**.
+   2. Select the **Select features using an expression** icon.
+   3. On the **Expression**  tab, enter the text "networkGrp > 0" and select **Select Features**.
+7. On the Attribute table window, select the **Invert selection** icon.
+8. Export selection as a new geopackage file:
+   1. Right-click the **networkOSM_Ovar** layer, hover over **Export** and select **Export Selected Features As**.
+   2. On the **Save Vector Layer as** window, enter the desired folder and name *`networkOSM_Ovar_cleaned.gpkg`* in the **Filename**, check CRS and select **OK**.
 
 ### 6. Convert network geometry to the required type
 1. Open R and load the cleaned network from Ovar:
@@ -297,12 +305,12 @@ Since the raster covers the country but only a small area is needed, cut the DEM
 4. In the **Raster Extraction - Clip Raster by Extent** window, select the parameters:
     - **Input layer**: select DEM file from the dropdown list
     - **Clipping extent**: select **Draw on Map Canvas** from the dropdown list and draw the rectangle of the desired extent
-5. Click **Run**. The clipped raster layer is created.
+5. Select **Run**. The clipped raster layer is created.
 6. Select the clipped DEM layer and right-click it.
 7. Hove over **Export** and select **Save as** from the menu.
 8. In the **Save raster layer as** window, select **GeoTIFF** from the **Format** drop-down list.
-9. In the **Filename** box, enter the name of the file (I chose the name *DEM_Ovar*.) You can click the side button **Navigate** to choose the folder and alterantively enter the name in the pop-up window.
-10. Click **OK**. File with name *`DEM_Ovar.tif`* is created. \
+9. In the **Filename** box, enter the name of the file (I chose the name *DEM_Ovar*.) You can select the side button **Navigate** to choose the folder and alterantively enter the name in the pop-up window.
+10. Select **OK**. File with name *`DEM_Ovar.tif`* is created. \
 *NOTE:* The default CRS WGS84 can be selected in the **CRS** field so that the DEM raster is in the same Coordinate Reference System as the one of the road network. This will be important in section [6. Calculate slopes](#calculate-slopes).
 
 ### 10. Check geometry requirements and visualize
