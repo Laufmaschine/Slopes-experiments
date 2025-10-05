@@ -439,4 +439,4 @@ The DEM and road network geometries - *`DEM_Ovar.tif`* and *`network_Ovar.gpkg`*
     tmap_save(map_slopes, "<folder_path>/slopes_SRTM_Ovar.html")
     ```
 
-    ![plot](./README_files/Ovar_network_slope_classes_2.png)
+    ![plot](./images/html_map_slopes_Ovar.png)
