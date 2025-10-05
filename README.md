@@ -434,7 +434,7 @@ The DEM and road network geometries - *`DEM_Ovar.tif`* and *`network_Ovar.gpkg`*
     mapslopes
     ```
 
-4. Save created map as *html* file *`slopes_SRTM_Ovar.html`*:
+4. Save created map as an *html* file *`slopes_SRTM_Ovar.html`*:
     ```
     tmap_save(map_slopes, "<folder_path>/slopes_SRTM_Ovar.html")
     ```
