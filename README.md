@@ -178,7 +178,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
     ```
     #municips_PT = st_read("<path>/MunicipsPT.gpkg")
     library(stplanr)
-    linesOSM_Ovar = st_crop(portugal_osm_filtered, MunLimit)
+    linesOSM_Ovar = st_crop(networkOSM_PT_filtered, Ovar_limit)
     ```
     ```
     ## Warning message:
@@ -220,16 +220,16 @@ The segments of the geometry that are isolated, that is, that not connected to t
 7. On the Attribute table window, select the **Invert selection** icon.
 8. Export selection as a new geopackage file:
    1. Right-click the **networkOSM_Ovar** layer, hover over **Export** and select **Export Selected Features As**.
-   2. On the **Save Vector Layer as** window, enter the desired folder and name *`networkOSM_Ovar_cleaned.gpkg`* in the **Filename**, check CRS and select **OK**.
+   2. On the **Save Vector Layer as** window, enter the desired folder and name of file *`networkOSM_Ovar_cleaned.gpkg`* in the **Filename**, check CRS and select **OK**.
 
 ### 6. Convert network geometry to the required type
-1. Open R and load the cleaned network from Ovar:
+1. Open R and load the cleaned road network from Ovar:
     ```
     networkOSM_Ovar_cleaned = st_read("<path>/networkOSM_Ovar_cleaned.gpkg")
     ```
     ```
     ## Reading layer `networkosm_ovar' from data source 
-    ## `D:\Documentos\Projetos\GIS\test_slopes3\networkOSM_Ovar_cleaned.gpkg' 
+    ## `<folder_path>\networkOSM_Ovar_cleaned.gpkg' 
     ##  using driver `GPKG'
     ## Simple feature collection with 6838 features and 12 fields
     ## Geometry type: MULTILINESTRING
@@ -237,15 +237,15 @@ The segments of the geometry that are isolated, that is, that not connected to t
     ## Bounding box:  xmin: -8.691657 ymin: 40.81252 xmax: -8.523237 ymax: 40.97621
     ## Geodetic CRS:  WGS 84
     ```
-    After the previous operation, geometry type is now MULTILINESTRING.
+    After the operation from step 5, geometry type is now MULTILINESTRING. However for slopes calculation, the type must be `LINESTRING`.
    
-3. Convert the geometry type to `LINSTRING` - the required geometry type for the slopes calculation:
+3. Create a new layer with the same features of **newtowrkOSM_Ovar_cleaned** but with correct geometry type `LINSTRING`, using the geometries before the cleansing of step 5:
     ```
-    networkOSM_Ovar_conv = portugal_osm_filtered %>% filter(osm_id %in% networkOSM_Ovar_cleaned$osm_id)
+    networkOSM_Ovar_conv = networkOSM_PT_filtered %>% filter(osm_id %in% networkOSM_Ovar_cleaned$osm_id)
     ```
 4. Check if geometry type is now correct:
     ```
-    st_geometry(networkOSM_Ovar_cov)
+    st_geometry(networkOSM_Ovar_conv)
     ```
     ```
     ## Geometry set for 6838 features 
@@ -260,16 +260,16 @@ The segments of the geometry that are isolated, that is, that not connected to t
     ## LINESTRING (-8.603908 40.92804, -8.6037 40.9279...
     ## LINESTRING (-8.60317 40.92573, -8.602993 40.925...
     ```
-5. Save converted geometry in geopackage file *`networkOSM_Ovar_conv.gpkg`*:
+5. Save new layer in geopackage file *`networkOSM_Ovar_conv.gpkg`*:
     ```
-    st_write(networkOSM_Ovar_conv, "<path>/networkOSM_Ovar_conv.gpkg")
+    st_write(networkOSM_Ovar_conv, "<folder_path>/networkOSM_Ovar_conv.gpkg")
     ```
     
 ### 7. Cut long segments
 The goal is to cut long segments to calculate a mean value that is more realistic. Road segments will be cut at the instersection with another segments that have the same z level, to avoid cutting brunels. EXPLAIN
 1. In R, check the number of rows of the road network layer:
     ```
-    nrow(networkOSM_Ovar_cleaned)
+    nrow(networkOSM_Ovar_conv)
     ```
     ```
     ## [1] 6838
@@ -277,7 +277,7 @@ The goal is to cut long segments to calculate a mean value that is more realisti
 2. Use a function that cut the segments in its internal vertices except in the intersection with brunels (bridges and tunnels):
     ```
     library(stplanr)
-    network_Ovar = stplanr::rnet_breakup_vertices(networkOSM_Ovar_cleaned)
+    network_Ovar = stplanr::rnet_breakup_vertices(networkOSM_Ovar_conv)
     ```
 3. Check the number of rows after cutting the road network in the intersections:
     ```
@@ -289,7 +289,7 @@ The goal is to cut long segments to calculate a mean value that is more realisti
 4. Export the resulting geometry to *geopackage* format *`network_Ovar.gpkg`*:
    
     ```
-    st_write(network_Ovar, "D:/Documentos/Projetos/GIS/test_slopes3/network_Ovar.gpkg")
+    st_write(network_Ovar, "<folder_path>/network_Ovar.gpkg")
     ```
     The road network is ready for the slopes calculation.
 
@@ -317,10 +317,34 @@ Since the raster covers the country but only a small area is needed, cut the DEM
 The DEM and road network geometries - *`DEM_Ovar.tif`* and *`network_Ovar.gpkg`* - must be in the same CRS:
 1. Load the clipped DEM in R:
     ```
-    st_read("<folder_path>/DEM_Ovar.gpkg")
+    library(raster)
+    DEM_Ovar = raster("<folder_path>/DEM_Ovar.tif")
     ```
-    
-3. Plot DEM and road network of Ovar together:
+
+2. Check some data of raster:
+   ```
+   class(DEM_Ovar)
+   ```
+   ```
+   ## [1] "RasterLayer"
+   ## attr(,"package")
+   ## [1] "raster"
+   ```
+   ```
+   summary(values(DEM_Ovar))
+   ```
+   ```
+   ## Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+   ##-7.00    0.00   26.00   69.32  124.00  353.00    9357
+   ```
+   ```
+   res(DEM_Ovar)
+   ```
+   ```    
+   ## [1] 0.0002950317 0.0002264756
+   ```
+   
+4. Plot DEM and road network of Ovar together:
     ```
     raster::plot(DEM_Ovar)
     plot(sf::st_geometry(network_Ovar), add = TRUE)
@@ -328,29 +352,30 @@ The DEM and road network geometries - *`DEM_Ovar.tif`* and *`network_Ovar.gpkg`*
 
 ![plot](./images/DEM_and_network_Ovar.png)
 
-### 11. Calculate slopes of the road network and statistics
+### 11. Calculate slopes and statistics of the road network
 1. Still in R, add a column to the road network with the slopes values:
     ```
+    library(slopes)
     network_Ovar$slope = slope_raster(network_Ovar, dem = DEM_Ovar )
     ```
    
-3. Calculate the percentage of the following slopes values: minimum, P25, median, average, P75, maximum:
+3. Calculate the percentages of slope values and key summary statistics - minimum, P25, median, average, P75, maximum:
     ```
     network_Ovar$slope_perc = network_Ovar$slope*100
     summary(network_Ovar$slope_perc)
     ```
     ```
-    # Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    # 0.000   1.401   2.546   3.023   3.987  18.496
+    ## Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ## 0.000   1.279   2.469   3.175   4.165  38.185
     ``` 
 
 ### 12. Assign slope classes to the network and calculate percentages
-1. Create a new column for slope classes and assign a value for each road:
+1. Create a new column for slope classes, here called gradients, and assign a value for each road:
     ```
-    network_Ovar$slope_class =  network_Ovar$slope_perc %>%
+    network_Ovar$gradient =  network_Ovar$slope_perc %>%
        cut(
          breaks = c(0, 3, 5, 8, 10, 20, Inf),
-         labels = c("0-3: flat", "3-5: light","5-8: medium", "8-10: hard", "10-20: terrible", ">20: impossible"),
+         labels = c("0-3: flat", "3-5: mild","5-8: medium", "8-10: hard", "10-20: extreme", ">20: impossible"),
          right = F
        )
     ```
@@ -360,19 +385,19 @@ The DEM and road network geometries - *`DEM_Ovar.tif`* and *`network_Ovar.gpkg`*
     round(prop.table(table(network_Ovar$slope_class))*100,1)
     ```
     ```
-    ##      0-3: flat       3-5: light      5-8: medium  8-10: hard 10-20: terrible >20: impossible
-    ##           58.4            25.1            13.2             1.3             2.0             0.0 COPY AND PASTE AGAIN
+    ##       0-3: flat       3-5: mild     5-8: medium      8-10: hard  10-20: extreme >20: impossible 
+    ##            59.0            22.6            12.2             2.9             3.2             0.1 
     ``` 
-    This means that half of the streets of the sample are flat or almost flat, and more than 80% of the streets are perfectly cyclable.
+    This means that more than half of the streets of the sample are flat or almost flat, and more than 80% of the streets are perfectly cyclable.
 
 ### 13. Calculate length of the network and check values
 1. Add a column with the length of each segment of the geometry in meters:
     ```
-    network_OSM$length = st_length(network_OSM)
+    network_Ovar$length = st_length(network_Ovar)
     ```
 2. Check the new columns and some values:
     ```
-    head(ovar_route3)
+    head(network_Ovar)
     ```
 
 ### 14. Create interactive map of network with the slope classes
@@ -390,28 +415,23 @@ The DEM and road network geometries - *`DEM_Ovar.tif`* and *`network_Ovar.gpkg`*
     ```
 3. Create map of slope classes:
     ```
-    tmap_options(basemaps = leaflet::providers$CartoDB.Positron) #base map
-    ```
-    ```
-    ## [v3->v4] `tmap_options()`: use basemap.server instead of basemaps
-    ```
-    ````
-    tmap_options(basemap.server = leaflet::providers$CartoDB.Positron)
-    map_slopes =
+    tmap_options(basemaps = leaflet::providers$CartoDB.Positron)
+    mapslopes =
      tm_shape(network_Ovar) +
      tm_lines(
-         col = "slope_class",
+         col = "gradient",
          palette = palredgreen, #colours palette
          lwd = 2, #thickness of lines
-         title.col = "Slope [%]",
+         title.col = "Gradient [%]",
          popup.vars = c("Type: " = "highway",
                         "Length" = "length",
-                        "Slope: " = "slope",
-                        "Class: " = "slope_class"),
+                        "Slope: " = "slope_perc",
+                        "Slope class: " = "gradient"),
          popup.format = list(digits = 1),
          # id = "slope"
          id = "name" #if the PC is not able to export due lack of memory, delete this line
        )
+    mapslopes
     ```
 
 4. Save created map as *html* file *`slopes_SRTM_Ovar.html`*:
