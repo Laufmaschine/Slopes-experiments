@@ -58,7 +58,7 @@ In this example:
     | tmap | Thematic maps, that is, geographical maps in which spatial data distributions are visualized | https://cran.r-project.org/web/packages/tmap/index.html |
 
 ### 1. Download map with municipality limits of the country
-Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_Continente_2024_1-gpkg.zip`* by selecting the link https://geo2.dgterritorio.gov.pt/caop/CAOP_Continente_2024_1-gpkg.zip.
+Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_Continente_2024_1-gpkg.zip`* by selecting the https://geo2.dgterritorio.gov.pt/caop/CAOP_Continente_2024_1-gpkg.zip link.
 
 ### 2. Create map of the selected municipality
 1. Unzip the downloaded *geopackage* file *`CAOP_Continente_2024-gpkg.zip`*.
@@ -76,7 +76,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
    ## Projected CRS: ETRS89 / Portugal TM06
    ```
       
-3. Check the names of the columns, particularly municipalities and geometry ones, to be used in the next step:
+3. Check the names of the columns, particularly **municipalities** and **geometry** ones, to be used in the next step:
    ```
    colnames(CAOP)
    ```
@@ -94,7 +94,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
    municips_PT = st_transform(municips_PT, 4326)
    ```
 
-6. Save geometry as geopackage file:
+6. Save geometry as a *geopackage* file:
     ```
     st_write(municips_PT, "<path>/municips_PT.gpkg", append=F)
     ```
@@ -102,7 +102,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
     ## Writing layer `MunicipsPT' to data source `<folder_path>/MunicipsPT.gpkg' using driver `GPKG'
     ## Writing 278 features with 1 fields and geometry type Multi Polygon.
     ```
-    Later, to reproduce the exercise for another municipality, skip the steps 1 to 8 and use the file *`municips_PT.gpkg`* for the next steps.
+    To reproduce the exercise for another municipality, skip the steps 1 to 6 and use the file *`municips_PT.gpkg`* for the next steps.
 
 7. Get the list of the municipalities:
     ```
@@ -140,7 +140,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
     ```
     The road network of Portugal is downloaded to a temporary folder in *geopackage* format, native format from QIGS, equivalent to shapefile format.
 
-2. Read *geopackage* file and check data, such as Coordinate Reference System and geometry type:
+2. Read *geopackage* file and check data, such as Coordinate Reference System (CRS) and geometry type:
     ```
     networkOSM_PT = st_read("<folder_path>/geofabrik_portugal-latest.gpkg", layer= "lines")
     ```
@@ -166,7 +166,7 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
                 "motorway", "motorway_link", "pedestrian", "steps", "service", "track"))
     ```
     *Notes from reference instructions:* OpenStreetMap classifies the roads in different categories. The footpaths should be left out of the selected network sample. Also, to get a lighter network, only the roads
-    with higher levels can be selected, such as the ones with categories "primary", "secondary" and "tertiary". Some roads do not have a category assigned yet ( value is **unclassified**) but can be used for cycling as well. I kept this category.
+    with higher levels can be selected, such as the ones with categories **primary**, **secondary** and **tertiary**. Some roads do not have a category assigned yet ( value is **unclassified**) but can be used for cycling as well. I kept this category.
 
 6. Save filtered network of the country as a geopackage file - *`networkOSM_PT_filtered.gpkg`*:
     ```
@@ -201,23 +201,23 @@ Download the most recent CAOP (Carta Administrativa Oficial de Portugal) *`CAOP_
 
 ### 5. Delete unconnected segments
 The segments of the geometry that are isolated, that is, that not connected to the main road network, must be deleted:
-1. Load the layer *networkOSM_Ovar.gpkg* in QGIS.
+1. Load the layer *`networkOSM_Ovar.gpkg`* in QGIS.
 2. In the upper menu, select **Vector** and check if **Disconnected Islands** plugin is displayed.
    - If it is, go to step 3.
    - If not, in the upper menu, select **Plugins** > **Manage and Install Plugins** and check the **Installed** plugins.
-       - If **Disconnected Islands** is on the list, tick its box for it to appear on the **Vector** plugins list and go to step 3. (CHECK)
+       - If **Disconnected Islands** is on the list, select its box for it to appear on the **Vector** plugins list and go to step 3. (CHECK)
        - If **Disconnected Islands** is not on the list, install it.
            1. Select **Not installed**.
            2. Enter the plugin name name in the search box.
            3. Select it and then select **Install Plugin**.
 3. Hover over **Disconnected Islands** and then select **Check for Disconnected Islands**.
 4. Select the option **Use all vertices on a road link** and the lowest tolerance in **Tolerance**. Select **OK**.
-   203 segments were selected, with a group ID assigned higher than 0 (networkGRP attribute).
+   Output: 203 segments were selected, with a group ID assigned higher than 0 (networkGRP attribute).
 6. Select all the segments with a networkGRP > 0:
    1. Right-click the **networkOSM_Ovar** layer and select **Open Attribute Table**.
    2. Select the **Select features using an expression** icon.
    3. On the **Expression**  tab, enter the text "networkGrp > 0" and select **Select Features**.
-7. On the Attribute table window, select the **Invert selection** icon.
+7. On the **Attribute table** window, select the **Invert selection** icon.
 8. Export selection as a new geopackage file:
    1. Right-click the **networkOSM_Ovar** layer, hover over **Export** and select **Export Selected Features As**.
    2. On the **Save Vector Layer as** window, enter the desired folder and name of file *`networkOSM_Ovar_cleaned.gpkg`* in the **Filename**, check CRS and select **OK**.
@@ -237,9 +237,9 @@ The segments of the geometry that are isolated, that is, that not connected to t
     ## Bounding box:  xmin: -8.691657 ymin: 40.81252 xmax: -8.523237 ymax: 40.97621
     ## Geodetic CRS:  WGS 84
     ```
-    After the operation from step 5, geometry type is now MULTILINESTRING. However for slopes calculation, the type must be `LINESTRING`.
+    After the operation from step 5, geometry type is now MULTILINESTRING. However for slopes calculation, the type must be LINESTRING.
    
-3. Create a new layer with the same features of **newtowrkOSM_Ovar_cleaned** but with correct geometry type `LINSTRING`, using the geometries before the cleansing of step 5:
+3. Create a new layer with the same features of **newtowrkOSM_Ovar_cleaned** but with correct geometry type LINSTRING, using the geometries before the cleansing of step 5:
     ```
     networkOSM_Ovar_conv = networkOSM_PT_filtered %>% filter(osm_id %in% networkOSM_Ovar_cleaned$osm_id)
     ```
@@ -260,7 +260,7 @@ The segments of the geometry that are isolated, that is, that not connected to t
     ## LINESTRING (-8.603908 40.92804, -8.6037 40.9279...
     ## LINESTRING (-8.60317 40.92573, -8.602993 40.925...
     ```
-5. Save new layer in geopackage file *`networkOSM_Ovar_conv.gpkg`*:
+5. Save the new layer as *geopackage* file *`networkOSM_Ovar_conv.gpkg`*:
     ```
     st_write(networkOSM_Ovar_conv, "<folder_path>/networkOSM_Ovar_conv.gpkg")
     ```
@@ -294,7 +294,7 @@ The goal is to cut long segments to calculate a mean value that is more realisti
     The road network is ready for the slopes calculation.
 
 ### 8. Download DEM of the country
-Download the QGIS project with DEM layer from https://www.fc.up.pt/pessoas/jagoncal/dems/ by using the link https://www.fc.up.pt/pessoas/jagoncal/dems/dems_pt.zip.
+Download the QGIS project with DEM layer from https://www.fc.up.pt/pessoas/jagoncal/dems/ by selecting the https://www.fc.up.pt/pessoas/jagoncal/dems/dems_pt.zip link.
 
 ### 9. Clip DEM by the road network
 Since the raster covers the country but only a small area is needed, cut the DEM raster to the city netowrk for the slopes analysis.
